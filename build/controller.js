@@ -1,27 +1,15 @@
-
+'use strict';
 //import idb from 'idb';
 //const request = require('request');
 //const idb = require('idb');
+ 
 
-function openDatabase() { //dd
-  // If the browser doesn't support service worker,
-  // we don't care about having a database
-  if (!navigator.serviceWorker) () => {
-    return Promise.resolve();
-  }
-//
-  return idb.open('currency', 1, function(upgradeDb) {
-    let store = upgradeDb.createObjectStore('converter', {
-      keyPath: 'id'
-    });
-    store.createIndex('by-name', 'currencyName');
-  });
-}
 
- function Controller()  {
+class Controller  {
+	constructor () {
   this._lostConnectionToast = null;
-  this._dbPromise = openDatabase();
   this._registerServiceWorker();
+  this._dbPromise = this.openDatabase();
   //this._cleanImageCache();
 
   var Controller = this;
@@ -32,7 +20,24 @@ function openDatabase() { //dd
   });*/
 }
 
-Controller.prototype._registerServiceWorker = () => {
+
+ openDatabase() { //dd
+  // If the browser doesn't support service worker,
+  // we don't care about having a database
+  if (!navigator.serviceWorker) () => {
+    return Promise.resolve();
+  }
+//
+  return idb.open('converter', 1, function(upgradeDb) {
+    let store = upgradeDb.createObjectStore('currency', {
+      keyPath: 'id'
+    });
+    store.createIndex('by-name', 'currencyName');
+	upgradeDb.createObjectStore('exchangerate');
+  });
+}
+
+_registerServiceWorker () {
   if (!navigator.serviceWorker) () => { return };
 
   var Controller = this;
@@ -67,104 +72,127 @@ Controller.prototype._registerServiceWorker = () => {
   });
 };
 
-Controller.prototype._showCachedMessages = function() {
-  var Controller = this;
 
-  return this._dbPromise.then(function(db) {
-    // if we're already showing posts, eg shift-refresh
-    // or the very first load, there's no point fetching
-    // posts from IDB
-    if (!db) return;
+ _getCurrencies () {
+	var Controller = this;
+fetch('https://free.currencyconverterapi.com/api/v5/currencies')
+           .then(res => res.json())
+           .then( data => {
+              let arr = '';
+               for (let key in data.results) {
+                   console.log(data.results[`${key}`]);
+                   arr += '<option value="' + data.results[`${key}`].id + '"> ' + data.results[`${key}`].currencyName;
+				   Controller._idbCurrencies(data.results[`${key}`]);
+               }
+               document.getElementById('from').innerHTML = arr;
+               document.getElementById('to').innerHTML = arr;
+			   
+              }).catch(err => {
+			  console.log(err);
+			  Controller._idbCurr();
+			  }
+			  );
+     
+}
 
-    var index = db.transaction('converter')
-      .objectStore('converter').index('by-name');
+ _idbCurrencies (key) {
+	var Controller = this;
+return this._dbPromise.then(function(db) {
+  var tx = db.transaction('currency', 'readwrite');
+  var currency = tx.objectStore('currency');
+          currency.put(key);
+  return tx.complete;
+}).then(function() {
+  console.log('Added all currency');
+});
 
-    return index.getAll().then(function(messages) {
-      console.log('converter table created');;
-    });
-  });
-};
+}
 
-Controller.prototype._trackInstalling = (worker) => {
-  var Controller = this;
-  worker.addEventListener('statechange', () => {
-    if (worker.state == 'installed') {
-      Controller._updateReady(worker);
-    }
-  });
-};
 
-Controller.prototype._updateReady = function(worker) {
-  /*var toast = this._toastsView.show("New version available", {
-    buttons: ['refresh', 'dismiss']
-  });*/
+ _getExchange (exfrom,exto,val,out) {
+	var Controller = this;
+	var exvalue = "";
+fetch(`https://free.currencyconverterapi.com/api/v5/convert?q=${exfrom}_${exto},${exto}_${exfrom}&compact=ultra`)
+           .then(res => res.json())
+           .then( data => {
+              console.log(data);
+				   Controller._idbExrate(`${exfrom}_${exto}`,data[`${exfrom}_${exto}`],`${exto}_${exfrom}`,data[`${exto}_${exfrom}`]);
+               exvalue = parseFloat(parseFloat(data[`${exfrom}_${exto}`]) * parseFloat(val)).toFixed(2); 
+                console.log(exvalue);	
+                	document.getElementById(out).value = exvalue;		   
+              }).catch(err => {
+			  console.log(err);
+			  Controller._idbExchange (exfrom,exto,val,out);
+			  }
+			  );
+     
+}
 
- // toast.answer.then(function(answer) {
-   // if (answer != 'refresh') return;
-    worker.postMessage({action: 'skipWaiting'});
-  //});
-};
 
-// open a connection to the server for live updates
-Controller.prototype._openSocket = function() {
-  
 
-    // try and reconnect in 5 seconds
-    setTimeout( () => {
-      Controller._openSocket();
-    }, 5000);
- 
-};
 
-Controller.prototype._cleanImageCache = function() {
-  return this._dbPromise.then(function(db) {
-    if (!db) return;
+ _idbExrate (id1,exfrom,id2,exto) {
+	var Controller = this;
+return this._dbPromise.then(function(db) {
+  var tx = db.transaction('exchangerate', 'readwrite');
+  var rate = tx.objectStore('exchangerate');
+          rate.put(exfrom,id1);
+		  rate.put(exto,id2);
+  return tx.complete;
+}).then(function() {
+  console.log('Added all currency');
+});
 
-    var imagesNeeded = [];
+}
 
-    var tx = db.transaction('converter');
-    return tx.objectStore('converter').getAll().then(function(messages) {
-      messages.forEach(function(message) {
-        if (message.photo) {
-          imagesNeeded.push(message.photo);
-        }
-        imagesNeeded.push(message.avatar);
-      });
 
-      return caches.open('converter-content-imgs');
-    }).then(function(cache) {
-      return cache.keys().then(function(requests) {
-        requests.forEach(function(request) {
-          var url = new URL(request.url);
-          if (!imagesNeeded.includes(url.pathname)) cache.delete(request);
-        });
-      });
-    });
-  });
-};
+ _idbCurr () {
+var Controller = this;
 
-// called when the web socket sends message data
-Controller.prototype._onSocketMessage = function(data) {
-  var messages = JSON.parse(data);
+document.getElementById('from').innerHTML = ''
+  document.getElementById('to').innerHTML = '';
+  let arr=''
+ return this._dbPromise.then(function(db) {
+  var tx = db.transaction('currency');
+  var currStore = tx.objectStore('currency');
+  var currIndex = currStore.index('by-name');
 
-  this._dbPromise.then(function(db) {
-    if (!db) return;
+  return currIndex.getAll();
+}).then(function(data) {
+	data.forEach(function(data) {
+       arr += `<option value="${data.id}"> ${data.currencyName}</option>`;
+      });	
+  //console.log('currency:', data);
+  return arr;
+}).then( (arr) => {
+			   document.getElementById('from').innerHTML = arr;
+               document.getElementById('to').innerHTML = arr;
+});
 
-    var tx = db.transaction('converter', 'readwrite');
-    var store = tx.objectStore('converter');
-    messages.forEach(function(message) {
-      store.put(message);
-    });
 
-    // limit store to 30 items
-    store.index('by-date').openCursor(null, "prev").then(function(cursor) {
-      return cursor.advance(30);
-    }).then(function deleteRest(cursor) {
-      if (!cursor) return;
-      cursor.delete();
-      return cursor.continue().then(deleteRest);
-    });
-  });
+}
 
-  this._postsView.addPosts(messages);
-};
+
+ _idbExchange (exfrom,exto,val,out) {
+var Controller = this;
+
+  let exvalue=''
+ return this._dbPromise.then(function(db) {
+  var tx = db.transaction('exchangerate');
+  var currStore = tx.objectStore('exchangerate');
+  return currStore.getAll(`${exfrom}_${exto}`);
+}).then(function(data) {
+       exvalue = parseFloat(parseFloat(data) * parseFloat(val)).toFixed(2); 
+  	 console.log('currency:', exvalue);
+    document.getElementById(out).value = exvalue;
+});
+
+
+}
+
+
+
+
+
+
+}

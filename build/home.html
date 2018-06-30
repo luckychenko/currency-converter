@@ -15,27 +15,7 @@
     <link rel="stylesheet" href="style.css"/>
 	<script src="http://127.0.0.1:8008/idb.js"></script>
 	<script src="controller.js"></script>
-	<script>
 	
-    const control = new Controller();
-    window.onload = () => {
-	fetch('https://free.currencyconverterapi.com/api/v5/currencies')
-           .then(res => res.json())
-           .then( data => {
-              let arr = '';
-               for (let key in data.results) {
-                   console.log(data.results[`${key}`]);
-                   arr += '<option value="' + data.results[`${key}`].id + '"> ' + data.results[`${key}`].currencyName;
-               }
-               document.getElementById('from').innerHTML = arr;
-               document.getElementById('to').innerHTML = arr;
-              }).catch(err => 
-			  console.log(err)
-			  );
-	}
-	
-	
-</script>
 	  
   </head>
   <body>
@@ -47,7 +27,7 @@
 <legend><span class="number">1</span> Currency Converter</legend>
 <table class="qzNNJ">
    <tbody>
-     <tr><td><input type="text" name="field1" placeholder="Value *"></td><td class="lOIRyc"></td>
+     <tr><td><input type="number" id="fromval" placeholder="Value *" value="0" onchange="exchangefrom()"></td><td class="lOIRyc"></td>
          <td><div class="J8cLR">
           <select id="from" name="field4">
             <!-- <option value="USD">US Dollars</option>
@@ -57,7 +37,7 @@
           </div><div class="wNOBxb"></div></div>
           </td></tr>
      <tr ></tr>
-     <tr><td><input type="text" name="field1" placeholder=" *"></td><td class="lOIRyc"></td>
+     <tr><td><input type="text" id="toval" placeholder=" *" value="0" onchange="exchangeto()""></td><td class="lOIRyc"></td>
          <td><div class="J8cLR">
          <select id="to" name="field4">
             
@@ -81,3 +61,29 @@
 
   </body>
 </html>
+
+<script>
+	
+    const control = new Controller();
+    window.onload = () => {
+	control._getCurrencies();
+	}
+	
+ 
+	function exchangefrom() {
+	let exfrom = document.getElementById('from').value;
+	let exto = document.getElementById('to').value;
+	let fromval = parseFloat(document.getElementById('fromval').value);
+    control._getExchange(exfrom,exto,fromval,'toval');
+	}
+	
+	
+	function exchangeto() {
+	let exfrom = document.getElementById('from').value;
+	let exto = document.getElementById('to').value;
+	let fromval = parseFloat(document.getElementById('toval').value);
+    control._getExchange(exfrom,exto,fromval,'fromval');
+	}
+	
+	
+</script>
