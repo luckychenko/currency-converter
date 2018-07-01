@@ -5,7 +5,7 @@ var http = require('http').Server(app);
 var io = require('socket.io')(http);
 var path = require('path');
 
-var staticOptions = {
+const staticOptions = {
     maxAge: 0
 };
 
@@ -25,9 +25,7 @@ app.get('/idb.js', function (req, res) {
     res.sendFile(path.join(__dirname + '/node_modules/idb/lib/idb.js'));
 });
 
-app.use('/sw.js', function (req, res) {
-    return res.sendFile(path.resolve(path.join(__dirname + '/dist/sw/sw.js')), staticOptions);
-});
+app.use('/sw.js', (req, res) => res.sendFile(path.resolve(path.join(__dirname + '/dist/sw/sw.js')), staticOptions));
 /*app.get('/sw.js', function (req, res) {
     res.sendFile(path.join(__dirname + '/dist/sw/sw.js'));
 });*/
