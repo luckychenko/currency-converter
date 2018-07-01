@@ -45,7 +45,7 @@
           </div><div class="wNOBxb"></div></div>
           </td></tr>
      <tr><td colspan="2">
-          <input type="submit" value="Apply" />
+          <div id="msg"> </div>
          </td></tr>
     </tbody></table>
 </fieldset>
@@ -79,8 +79,8 @@
 	
 	
 	function exchangeto() {
-	let exfrom = document.getElementById('from').value;
-	let exto = document.getElementById('to').value;
+	let exfrom = document.getElementById('to').value;
+	let exto = document.getElementById('from').value;
 	let fromval = parseFloat(document.getElementById('toval').value);
     control._getExchange(exfrom,exto,fromval,'fromval');
 	}

@@ -72,9 +72,24 @@ _registerServiceWorker () {
   });
 };
 
+_trackInstalling (worker) {
+  var Controller = this;
+  worker.addEventListener('statechange', function() {
+    if (worker.state == 'installed') {
+      Controller._updateReady(worker);
+    }
+  });
+};
+
+_updateRead(worker) {
+   
+    worker.postMessage({action: 'skipWaiting'});
+
+};
 
  _getCurrencies () {
 	var Controller = this;
+	document.getElementById('msg').innerHTML = 'getting currencies list...';
 fetch('https://free.currencyconverterapi.com/api/v5/currencies')
            .then(res => res.json())
            .then( data => {
@@ -92,7 +107,7 @@ fetch('https://free.currencyconverterapi.com/api/v5/currencies')
 			  Controller._idbCurr();
 			  }
 			  );
-     
+     document.getElementById('msg').innerHTML = '';
 }
 
  _idbCurrencies (key) {
@@ -112,6 +127,7 @@ return this._dbPromise.then(function(db) {
  _getExchange (exfrom,exto,val,out) {
 	var Controller = this;
 	var exvalue = "";
+	document.getElementById('msg').innerHTML = 'converting please wait...';
 fetch(`https://free.currencyconverterapi.com/api/v5/convert?q=${exfrom}_${exto},${exto}_${exfrom}&compact=ultra`)
            .then(res => res.json())
            .then( data => {
@@ -125,7 +141,7 @@ fetch(`https://free.currencyconverterapi.com/api/v5/convert?q=${exfrom}_${exto},
 			  Controller._idbExchange (exfrom,exto,val,out);
 			  }
 			  );
-     
+    
 }
 
 
@@ -176,7 +192,7 @@ document.getElementById('from').innerHTML = ''
  _idbExchange (exfrom,exto,val,out) {
 var Controller = this;
 
-  let exvalue=''
+  let exvalue;
  return this._dbPromise.then(function(db) {
   var tx = db.transaction('exchangerate');
   var currStore = tx.objectStore('exchangerate');
