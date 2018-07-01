@@ -141,7 +141,7 @@ fetch(`https://free.currencyconverterapi.com/api/v5/convert?q=${exfrom}_${exto},
 			  Controller._idbExchange (exfrom,exto,val,out);
 			  }
 			  );
-    
+    document.getElementById('msg').innerHTML = '';
 }
 
 
