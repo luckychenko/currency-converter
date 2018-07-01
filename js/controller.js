@@ -112,6 +112,7 @@ fetch('https://free.currencyconverterapi.com/api/v5/currencies')
               // document.getElementById('from').innerHTML = arr;
               // document.getElementById('to').innerHTML = arr;
 			   Controller._idbCurr();
+			   document.getElementById('msg').innerHTML = '';
               }).catch(err => {
 			  console.log(err);
 			  document.getElementById('msg').innerHTML = 'you seem to be offline...';
@@ -121,7 +122,7 @@ fetch('https://free.currencyconverterapi.com/api/v5/currencies')
                 }, 1000 * 5); */
 			  }
 			  );
-     document.getElementById('msg').innerHTML = '';
+     
 }
 
  _idbCurrencies (key) {
@@ -150,13 +151,15 @@ fetch(`https://free.currencyconverterapi.com/api/v5/convert?q=${exfrom}_${exto},
 				   Controller._idbExrate(`${exfrom}_${exto}`,data[`${exfrom}_${exto}`],`${exto}_${exfrom}`,data[`${exto}_${exfrom}`]);
                exvalue = parseFloat(parseFloat(data[`${exfrom}_${exto}`]) * parseFloat(val)).toFixed(2); 
                 console.log(exvalue);	
-                	document.getElementById(out).value = exvalue;		   
+                	document.getElementById(out).value = exvalue;
+                    document.getElementById('msg').innerHTML = '';					
               }).catch(err => {
 			  console.log(err);
 			  Controller._idbExchange (exfrom,exto,val,out);
+			  document.getElementById('msg').innerHTML = '';
 			  }
 			  );
-    document.getElementById('msg').innerHTML = '';
+    
 }
 
 
@@ -210,7 +213,7 @@ document.getElementById('msg').innerHTML = '';
 
  _idbExchange (exfrom,exto,val,out) {
 var Controller = this;
-
+document.getElementById('msg').innerHTML = 'converting please wait...';
   let exvalue;
  return this._dbPromise.then(function(db) {
   var tx = db.transaction('exchangerate');
@@ -220,6 +223,7 @@ var Controller = this;
        exvalue = parseFloat(parseFloat(data) * parseFloat(val)).toFixed(2); 
   	 console.log('currency:', exvalue);
     document.getElementById(out).value = exvalue;
+	document.getElementById('msg').innerHTML = '';
 });
 
 
