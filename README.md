@@ -1,6 +1,6 @@
-# Wittr
+# Currency Converter
 
-This is a silly little demo app for an offline-first course.
+This is ALCwithGoogle final challenge app for an offline-first course (mobile-web specialist track).
 
 You could run the app by using machine dependnecies
 
